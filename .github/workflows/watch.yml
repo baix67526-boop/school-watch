@@ -29,14 +29,14 @@ jobs:
           MAIL_TO: ${{ secrets.MAIL_TO }}
         run: python watcher.py
 
-           - name: Commit state
-              run: |
-                git config user.name "github-actions"
-                git config user.email "github-actions@github.com"
-      
-                git add state.json
-                git commit -m "Update state" || echo "No changes"
-      
-                git pull --rebase origin main || true
-                git push
+      - name: Commit state
+        run: |
+            git config user.name "github-actions"
+            git config user.email "github-actions@github.com"
+
+            git add state.json
+            git commit -m "Update state" || echo "No changes"
+
+            git pull --rebase origin main || true
+            git push
 
