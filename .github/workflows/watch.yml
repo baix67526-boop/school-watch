@@ -1,33 +1,30 @@
-name: school-watch
+name: School Watch
 
 on:
-  # 你提交这些文件后立刻触发一次
+  workflow_dispatch:
+  schedule:
+    - cron: "*/5 * * * *"
   push:
     paths:
-      - "subscriptions.xlsx"
       - "sources.txt"
       - "watcher.py"
       - "requirements.txt"
-      - ".github/workflows/watch.yml"
 
-  # 手动点按钮立即运行
-  workflow_dispatch:
+permissions:
+  contents: write
 
-  # 兜底定时：每5分钟（最小一般是5分钟）
-  schedule:
-    - cron: "*/5 * * * *"
-
-# 防止并发互相抢 push state.json
 concurrency:
   group: school-watch
   cancel-in-progress: true
 
 jobs:
-  run:
+  watch:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -43,17 +40,14 @@ jobs:
           SMTP_PORT: ${{ secrets.SMTP_PORT }}
           SMTP_USER: ${{ secrets.SMTP_USER }}
           SMTP_PASS: ${{ secrets.SMTP_PASS }}
-          ALWAYS_SEND_SUMMARY: ${{ secrets.ALWAYS_SEND_SUMMARY }}
-          TEST_MAIL_TO: ${{ secrets.TEST_MAIL_TO }}
+          MAIL_TO: ${{ secrets.MAIL_TO }}
         run: python watcher.py
 
       - name: Commit state
         run: |
           git config user.name "github-actions"
-          git config user.email "github-actions@github.com"
-
+          git config user.email "github-actions@users.noreply.github.com"
           git add state.json
-          git commit -m "Update state" || echo "No changes"
-
-          git pull --rebase origin main || true
+          git diff --cached --quiet && echo "No state change" || git commit -m "Update state"
+          git pull --rebase
           git push
