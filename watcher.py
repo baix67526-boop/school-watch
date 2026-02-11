@@ -79,11 +79,6 @@ def is_xml_response(resp: requests.Response) -> bool:
 
 
 def normalize_content(text: str, as_xml: bool) -> str:
-    """
-    只提取“更像列表”的信息，降低误报：
-    - XML：entry/item 的 title + link
-    - HTML：a 标签的文本 + href
-    """
     if as_xml:
         soup = BeautifulSoup(text, "xml")
         parts = []
@@ -125,9 +120,6 @@ def fingerprint(s: str) -> str:
 
 
 def fetch_one(item: SourceItem) -> tuple[str, str, str | None, str | None]:
-    """
-    returns: (school, url, fp, err)
-    """
     try:
         r = SESSION.get(item.url, timeout=TIMEOUT_SEC)
         r.raise_for_status()
@@ -146,14 +138,13 @@ def send_email(subject: str, body: str, to_addr: str) -> None:
     smtp_pass = os.getenv("SMTP_PASS", "").strip()
 
     if not (smtp_host and smtp_port and smtp_user and smtp_pass and to_addr):
-        raise RuntimeError("Missing SMTP settings or MAIL_TO")
+        raise RuntimeError("Missing SMTP settings or MAIL_TO/TEST_MAIL_TO")
 
     msg = MIMEText(body, "plain", "utf-8")
     msg["From"] = Header(smtp_user, "utf-8")
     msg["To"] = Header(to_addr, "utf-8")
     msg["Subject"] = Header(subject, "utf-8")
 
-    # 465/994 走 SSL；其余尝试 STARTTLS
     if smtp_port in (465, 994):
         server = smtplib.SMTP_SSL(smtp_host, smtp_port, timeout=25)
     else:
@@ -176,18 +167,27 @@ def send_email(subject: str, body: str, to_addr: str) -> None:
 
 
 def main():
+    # 开关：ALWAYS_SEND_SUMMARY=1 时，每次都发汇总（用于验收）
+    always_send_summary = (os.getenv("ALWAYS_SEND_SUMMARY", "0") or "0").strip().lower() in ("1", "true", "yes")
     mail_to = (os.getenv("MAIL_TO", "") or "").strip()
-    if not mail_to:
-        raise RuntimeError("MAIL_TO is empty")
+    test_to = (os.getenv("TEST_MAIL_TO", "") or "").strip()
+    target_to = test_to if test_to else mail_to
+
+    print(f"DEBUG ALWAYS_SEND_SUMMARY={always_send_summary}")
+    print(f"DEBUG MAIL_TO set? {'YES' if mail_to else 'NO'}")
+    print(f"DEBUG TEST_MAIL_TO set? {'YES' if test_to else 'NO'}")
+    print(f"DEBUG target_to={target_to}")
+
+    if not target_to:
+        raise RuntimeError("MAIL_TO is empty and TEST_MAIL_TO is empty")
 
     sources = load_sources(SOURCES_FILE)
     state = load_state(STATE_FILE)
     fps: dict = state.get("fingerprints", {})
 
-    updates = []   # (school, url)
-    failures = []  # (school, url, err)
+    updates = []
+    failures = []
 
-    # 并发抓取
     with ThreadPoolExecutor(max_workers=MAX_WORKERS) as ex:
         futures = [ex.submit(fetch_one, it) for it in sources]
         for fu in as_completed(futures):
@@ -195,44 +195,56 @@ def main():
             if fp is None:
                 failures.append((school, url, err))
                 continue
-
             old = fps.get(url)
             if old and old != fp:
                 updates.append((school, url))
             fps[url] = fp
 
-    # 保存 state（无论是否更新都保存，便于下次对比）
     state["fingerprints"] = fps
     save_state(STATE_FILE, state)
 
-    if not updates:
-        print(f"No updates. sources={len(sources)} failures={len(failures)}")
-        return
-
     now_str = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
-    subject = f"【学校官网更新】{len(updates)}条｜{now_str}"
+    subject = f"【学校监控汇总】更新{len(updates)}｜失败{len(failures)}｜{now_str}"
 
     lines = []
     lines.append(f"时间：{now_str}")
-    lines.append(f"监控源：{len(sources)}")
-    lines.append(f"更新：{len(updates)}")
-    lines.append(f"失败：{len(failures)}")
+    lines.append(f"监控源数量：{len(sources)}")
+    lines.append(f"检测到更新：{len(updates)}")
+    lines.append(f"抓取失败：{len(failures)}")
     lines.append("")
-    lines.append("=== 更新列表 ===")
-    for school, url in sorted(updates, key=lambda x: x[0]):
-        lines.append(f"- {school}：{url}")
+
+    if updates:
+        lines.append("=== 更新列表 ===")
+        for school, url in sorted(updates, key=lambda x: x[0]):
+            lines.append(f"- {school}：{url}")
+        lines.append("")
 
     if failures:
-        lines.append("")
         lines.append("=== 抓取失败（下次自动重试）===")
         for school, url, err in failures[:20]:
             lines.append(f"- {school}：{url}")
             lines.append(f"  err: {err}")
+        lines.append("")
+
+    if not updates and not failures:
+        lines.append("本次监控正常：暂无更新。")
 
     body = "\n".join(lines)
 
-    send_email(subject, body, mail_to)
-    print(f"Sent update email to {mail_to}. updates={len(updates)} failures={len(failures)}")
+    # 发送策略：有更新一定发；无更新看 ALWAYS_SEND_SUMMARY
+    should_send = bool(updates) or always_send_summary
+    if not should_send:
+        print("No updates and summary disabled; skip email.")
+        return
+
+    print("DEBUG sending email...")
+    try:
+        send_email(subject, body, target_to)
+        print(f"SENT to {target_to}")
+    except Exception as e:
+        print("EMAIL FAILED:", repr(e))
+        # 不让任务失败，避免你看到绿勾但以为没跑
+        return
 
 
 if __name__ == "__main__":
