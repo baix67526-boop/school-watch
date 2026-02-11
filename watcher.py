@@ -2,8 +2,10 @@
 # 功能：
 # 1) 读取 sources.txt（每行：学校名 URL）
 # 2) 定时抓取栏目页，做“降噪指纹”对比，判断是否有更新
-# 3) 读取 subscriptions.xlsx（email/schools/status），只给订阅了该学校的人发邮件（逐个单发，保护隐私）
-# 4) 将最新指纹写回 state.json（并配合 Actions 提交回仓库）
+# 3) 读取 subscriptions.xlsx（email/schools/status），只给订阅了该学校的人发邮件（逐个单发）
+# 4) 汇总验收开关：
+#    - ALWAYS_SEND_SUMMARY=1 且设置 TEST_MAIL_TO 时：每次运行都给 TEST_MAIL_TO 发一封【监控汇总】（即使无更新）
+# 5) 将最新指纹写回 state.json（配合 Actions 提交回仓库）
 
 import os
 import json
@@ -58,6 +60,53 @@ def send_email_to(subject: str, body: str, to_email: str):
         server.login(smtp_user, smtp_pass)
         server.sendmail(smtp_user, [to_email], msg.as_string())
 
+# ------------------- 验收汇总邮件开关 -------------------
+def send_summary_email(updates_by_school, failures):
+    """
+    每次运行发送一封“监控汇总”到 TEST_MAIL_TO（验收用）。
+    只有 ALWAYS_SEND_SUMMARY=1 且设置了 TEST_MAIL_TO 才会发送。
+    """
+    always = str(os.getenv("ALWAYS_SEND_SUMMARY", "")).strip()
+    test_to = (os.getenv("TEST_MAIL_TO") or "").strip()
+
+    if always != "1":
+        return
+    if not test_to:
+        # 没设置测试收件人就不发，避免误发
+        return
+
+    now_str = time.strftime("%Y-%m-%d %H:%M", time.localtime())
+    updated_schools = list(updates_by_school.keys())
+    ok_count = len(updated_schools)
+    fail_count = len(failures)
+
+    lines = []
+    lines.append(f"本次监控汇总（{now_str}）")
+    lines.append("")
+    lines.append(f"- 有更新学校数：{ok_count}")
+    lines.append(f"- 抓取失败数：{fail_count}")
+    lines.append("")
+
+    if updated_schools:
+        lines.append("【更新学校】")
+        for school in updated_schools:
+            lines.append(f"- {school}")
+        lines.append("")
+
+    if failures:
+        lines.append("【失败列表（节选）】")
+        for i, (name, url, err) in enumerate(failures[:10], start=1):
+            lines.append(f"{i}. {name}  {url}")
+            lines.append(f"   {err}")
+        if len(failures) > 10:
+            lines.append(f"... 还有 {len(failures)-10} 条未展示")
+        lines.append("")
+
+    lines.append("提示：这是验收/健康度汇总邮件，用于确认定时任务与发信链路正常。")
+    body = "\n".join(lines)
+    subject = f"【监控汇总】更新{ok_count}｜失败{fail_count}｜{now_str}"
+    send_email_to(subject, body, test_to)
+
 # ------------------- 抓取 + 降噪指纹 -------------------
 def fetch(url: str) -> str:
     headers = {
@@ -73,7 +122,7 @@ def fetch(url: str) -> str:
 
 def normalize_html(html: str) -> str:
     """
-    降噪：去 script/style，提取纯文本；只取前400行减少页脚访问量等变化导致误报
+    降噪：去 script/style，提取纯文本；只取前400行减少页脚/访问量等变化导致误报
     """
     soup = BeautifulSoup(html, "lxml")
     for tag in soup(["script", "style", "noscript"]):
@@ -110,7 +159,6 @@ def load_sources():
                 continue
             parts = ln.split()
             if len(parts) < 2:
-                # 不符合格式就跳过
                 continue
             name = parts[0].strip()
             url = parts[1].strip()
@@ -121,10 +169,10 @@ def load_sources():
 def load_subscriptions():
     """
     subscriptions.xlsx 表头要求：
-    email | schools | status （其余列可有可无）
+    email | schools | status
 
     schools：用逗号分隔学校名，例如：北京大学,清华大学
-    status：ACTIVE 才发，其他都不发
+    status：ACTIVE 才发
     """
     if not os.path.exists(SUBS_FILE):
         raise RuntimeError(f"Missing {SUBS_FILE} in repo root")
@@ -132,7 +180,6 @@ def load_subscriptions():
     wb = load_workbook(SUBS_FILE)
     ws = wb.active
 
-    # 解析表头列索引
     header = {}
     for idx, cell in enumerate(ws[1], start=1):
         if cell.value:
@@ -143,7 +190,6 @@ def load_subscriptions():
             raise RuntimeError(f"{SUBS_FILE} 缺少表头列：{col}")
 
     school_to_emails = {}
-
     for row in ws.iter_rows(min_row=2, values_only=True):
         email = row[header["email"] - 1]
         schools = row[header["schools"] - 1]
@@ -169,7 +215,6 @@ def main():
     state = load_state()
     school_to_emails = load_subscriptions()
 
-    # 记录更新：按学校名汇总（一个学校可能多条栏目源）
     updates_by_school = {}  # {school_name: [url1, url2, ...]}
     failures = []  # (school, url, error)
 
@@ -195,7 +240,10 @@ def main():
 
     save_state(state)
 
-    # 如果没有更新，就不发邮件（避免打扰）
+    # 新增：每次运行给 TEST_MAIL_TO 发“监控汇总”（验收用）
+    send_summary_email(updates_by_school, failures)
+
+    # 没更新就不打扰订阅用户（汇总邮件已发给你自己）
     if not updates_by_school:
         print("No updates.")
         return
@@ -207,12 +255,10 @@ def main():
         for em in subs:
             email_to_school_urls.setdefault(em, {}).setdefault(school, []).extend(urls)
 
-    # 没有人订阅这些学校也不发
     if not email_to_school_urls:
         print("Updates exist, but no subscribers matched.")
         return
 
-    # 发送
     now_str = time.strftime("%Y-%m-%d %H:%M", time.localtime())
     for em, school_map in email_to_school_urls.items():
         lines = [f"检测到你订阅的学校栏目有更新（{now_str}）：", ""]
@@ -222,10 +268,6 @@ def main():
                 host = urlparse(u).netloc
                 lines.append(f"- {host}\n  {u}")
             lines.append("")
-        if failures:
-            # 可选：给订阅者展示失败不展示（这里默认不展示，避免干扰）
-            pass
-
         lines.append("提示：请以学校官网为准。若需暂停/退订，请微信联系我。")
 
         subject = f"【调剂信息更新提醒】{len(school_map)}所学校栏目有变化"
