@@ -1,7 +1,7 @@
 name: school-watch
 
 on:
-  # 你提交这些文件后，立刻触发一次（不用等定时）
+  # 你提交这些文件后立刻触发一次
   push:
     paths:
       - "subscriptions.xlsx"
@@ -10,10 +10,10 @@ on:
       - "requirements.txt"
       - ".github/workflows/watch.yml"
 
-  # 允许手动点按钮立即运行（用于验证最快）
+  # 手动点按钮立即运行
   workflow_dispatch:
 
-  # 兜底定时：每5分钟（GitHub Actions cron 最小一般就是 5 分钟）
+  # 兜底定时：每5分钟（最小一般是5分钟）
   schedule:
     - cron: "*/5 * * * *"
 
@@ -43,6 +43,8 @@ jobs:
           SMTP_PORT: ${{ secrets.SMTP_PORT }}
           SMTP_USER: ${{ secrets.SMTP_USER }}
           SMTP_PASS: ${{ secrets.SMTP_PASS }}
+          ALWAYS_SEND_SUMMARY: ${{ secrets.ALWAYS_SEND_SUMMARY }}
+          TEST_MAIL_TO: ${{ secrets.TEST_MAIL_TO }}
         run: python watcher.py
 
       - name: Commit state
