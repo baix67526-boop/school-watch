@@ -1,9 +1,26 @@
 name: school-watch
 
 on:
-  schedule:
-    - cron: "*/1 * * * *" # 每30分钟
+  # 你提交这些文件后，立刻触发一次（不用等定时）
+  push:
+    paths:
+      - "subscriptions.xlsx"
+      - "sources.txt"
+      - "watcher.py"
+      - "requirements.txt"
+      - ".github/workflows/watch.yml"
+
+  # 允许手动点按钮立即运行（用于验证最快）
   workflow_dispatch:
+
+  # 兜底定时：每5分钟（GitHub Actions cron 最小一般就是 5 分钟）
+  schedule:
+    - cron: "*/5 * * * *"
+
+# 防止并发互相抢 push state.json
+concurrency:
+  group: school-watch
+  cancel-in-progress: true
 
 jobs:
   run:
@@ -26,17 +43,15 @@ jobs:
           SMTP_PORT: ${{ secrets.SMTP_PORT }}
           SMTP_USER: ${{ secrets.SMTP_USER }}
           SMTP_PASS: ${{ secrets.SMTP_PASS }}
-          MAIL_TO: ${{ secrets.MAIL_TO }}
         run: python watcher.py
 
       - name: Commit state
         run: |
-            git config user.name "github-actions"
-            git config user.email "github-actions@github.com"
+          git config user.name "github-actions"
+          git config user.email "github-actions@github.com"
 
-            git add state.json
-            git commit -m "Update state" || echo "No changes"
+          git add state.json
+          git commit -m "Update state" || echo "No changes"
 
-            git pull --rebase origin main || true
-            git push
-
+          git pull --rebase origin main || true
+          git push
