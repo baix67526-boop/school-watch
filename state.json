@@ -86,5 +86,21 @@
   "https://graduate.pumc.edu.cn/zsw/xxgk.htm": {
     "fp": "cd686763a881555bd281022016865845b97b7bd13ae9f3e64f752e6b9c8ff29a",
     "ts": 1770792032
+  },
+  "fingerprints": {
+    "https://yz.tsinghua.edu.cn/zsxx/sszs/jzml.htm": "eacbd26f605d8516fcbe042032f0d0763b3791da1c7ae9baa97bf975bfcfe52f",
+    "https://yanzhao.bjut.edu.cn/sszs.htm": "d86c860eceee6400e633b033281e2a20eeadfc5a4d36e8d80a5fc4eb77361fa0",
+    "https://yzb.bjtu.edu.cn/sszs/index.htm": "e918eec262bd2e34a805a821d29a7b026c72612bd0cd793fef0c03e086c138c2",
+    "https://yzb.buaa.edu.cn/xlss.htm": "cde9352a25f3473eb76859f0a3bef1d5bd4b67883bd85d6f8f345a8128c1787a",
+    "https://admission.pku.edu.cn/xxgk/xxgkssbm/index.htm?CSRFT=KKQJ-M4XU-FEG1-7N53-M8LY-JYQY-LY1E-708I": "ca0446f605b6051ced2709105d44011afcbe7cfb89f2074741a02afaa4b2cb64",
+    "https://yzxc.ustb.edu.cn/sssbkzn/sstzgg/index.htm": "36142d6b8761d76455734d12e3b963d69bc2baf28ac861441fa7fc068dec10e6",
+    "https://grd.bit.edu.cn/zsgz/ssyjs/tzgg_ss/index.htm": "a9041b685df46134f9faa08813dc6a2d723d17406dac63e6b8504bbb20b5d403",
+    "https://graduate.buct.edu.cn/14026/list.htm": "a24a31644441b6be811b5ec98654a112fc0400d6c9108a97684b502c47c49245",
+    "https://yjsy.ncut.edu.cn/zsgz/zytz.htm": "5cedbf95507a36bdbfd45d12304fc8de7d453ff1b84942a419925e366c58c961",
+    "https://gs.bigc.edu.cn/yjszs/sszs/2026nzs/index.htm": "d78318370e75c2b854b81aa98891b7515441d02ebf22e8c3236c999ef1e90f43",
+    "https://yjsy.bucea.edu.cn/tzgg0/index.htm": "af242b5fe87cb52135963d3830370d03fa11accdebe589050789a3bc65ccffa8",
+    "https://www.bipt.edu.cn/pub/yjszsw/zkxx/bkzl/index.htm": "b8196fb111ce6b621eb2250d22d60d44770e99252701ddd512fb473ef4cdea9b",
+    "https://yz.bua.edu.cn/zsdt.htm": "b9adc39e45e5e1ca8d6fb8457abe098247ffe07b2243a5f5371058bb44e38cbd",
+    "https://yz.cau.edu.cn/col/col41740/index.html": "cc2fbffaeef45c3cee3c0f4713ebfc5b490287ba6028211f3b47a0b3a46540b2"
   }
 }
