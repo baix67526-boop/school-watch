@@ -1,53 +1,20 @@
-name: School Watch
+name: school watch
 
 on:
   workflow_dispatch:
   schedule:
-    - cron: "*/5 * * * *"
+    - cron: "*/30 * * * *"
   push:
     paths:
-      - "sources.txt"
-      - "watcher.py"
-      - "requirements.txt"
-
-permissions:
-  contents: write
-
-concurrency:
-  group: school-watch
-  cancel-in-progress: true
+      - sources.txt
+      - watcher.py
+      - subscriptions.xlsx
+      - state.json
+      - .github/workflows/watch.yml
 
 jobs:
   watch:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.11"
-
-      - name: Install deps
-        run: pip install -r requirements.txt
-
-      - name: Run watcher
-        env:
-          SMTP_HOST: ${{ secrets.SMTP_HOST }}
-          SMTP_PORT: ${{ secrets.SMTP_PORT }}
-          SMTP_USER: ${{ secrets.SMTP_USER }}
-          SMTP_PASS: ${{ secrets.SMTP_PASS }}
-          MAIL_TO: ${{ secrets.MAIL_TO }}
-        run: python watcher.py
-
-      - name: Commit state
-        run: |
-          git config user.name "github-actions"
-          git config user.email "github-actions@users.noreply.github.com"
-          git add state.json
-          git diff --cached --quiet && echo "No state change" || git commit -m "Update state"
-          git pull --rebase
-          git push
+        uses: actions/check
