@@ -1,4 +1,4 @@
-# watcher.py
+# watcher.py  (带 DEBUG 输出版：用于确认 ALWAYS_SEND_SUMMARY / TEST_MAIL_TO 是否生效)
 # 功能：
 # 1) 读取 sources.txt（每行：学校名 URL）
 # 2) 定时抓取栏目页，做“降噪指纹”对比，判断是否有更新
@@ -6,6 +6,12 @@
 # 4) 汇总验收开关：
 #    - ALWAYS_SEND_SUMMARY=1 且设置 TEST_MAIL_TO 时：每次运行都给 TEST_MAIL_TO 发一封【监控汇总】（即使无更新）
 # 5) 将最新指纹写回 state.json（配合 Actions 提交回仓库）
+#
+# DEBUG：
+# - 在 send_summary_email() 会打印：
+#   DEBUG ALWAYS_SEND_SUMMARY = '...'
+#   DEBUG TEST_MAIL_TO set? = YES/NO
+#   DEBUG sending summary to TEST_MAIL_TO...
 
 import os
 import json
@@ -26,6 +32,7 @@ STATE_FILE = "state.json"
 SOURCES_FILE = "sources.txt"
 SUBS_FILE = "subscriptions.xlsx"
 
+
 # ------------------- HTTP Session（带重试） -------------------
 def make_session():
     s = requests.Session()
@@ -40,7 +47,9 @@ def make_session():
     s.mount("https://", HTTPAdapter(max_retries=retry))
     return s
 
+
 SESSION = make_session()
+
 
 # ------------------- 邮件发送（126：SMTP SSL 465） -------------------
 def send_email_to(subject: str, body: str, to_email: str):
@@ -60,7 +69,8 @@ def send_email_to(subject: str, body: str, to_email: str):
         server.login(smtp_user, smtp_pass)
         server.sendmail(smtp_user, [to_email], msg.as_string())
 
-# ------------------- 验收汇总邮件开关 -------------------
+
+# ------------------- 验收汇总邮件开关（带 DEBUG） -------------------
 def send_summary_email(updates_by_school, failures):
     """
     每次运行发送一封“监控汇总”到 TEST_MAIL_TO（验收用）。
@@ -69,11 +79,17 @@ def send_summary_email(updates_by_school, failures):
     always = str(os.getenv("ALWAYS_SEND_SUMMARY", "")).strip()
     test_to = (os.getenv("TEST_MAIL_TO") or "").strip()
 
+    # DEBUG（不打印具体邮箱内容，避免泄露）
+    print("DEBUG ALWAYS_SEND_SUMMARY =", repr(always))
+    print("DEBUG TEST_MAIL_TO set? =", "YES" if test_to else "NO")
+
     if always != "1":
         return
     if not test_to:
         # 没设置测试收件人就不发，避免误发
         return
+
+    print("DEBUG sending summary to TEST_MAIL_TO...")
 
     now_str = time.strftime("%Y-%m-%d %H:%M", time.localtime())
     updated_schools = list(updates_by_school.keys())
@@ -107,6 +123,7 @@ def send_summary_email(updates_by_school, failures):
     subject = f"【监控汇总】更新{ok_count}｜失败{fail_count}｜{now_str}"
     send_email_to(subject, body, test_to)
 
+
 # ------------------- 抓取 + 降噪指纹 -------------------
 def fetch(url: str) -> str:
     headers = {
@@ -120,6 +137,7 @@ def fetch(url: str) -> str:
     r.encoding = r.apparent_encoding or r.encoding
     return r.text
 
+
 def normalize_html(html: str) -> str:
     """
     降噪：去 script/style，提取纯文本；只取前400行减少页脚/访问量等变化导致误报
@@ -132,8 +150,10 @@ def normalize_html(html: str) -> str:
     lines = [ln for ln in lines if ln]
     return "\n".join(lines[:400])
 
+
 def fingerprint(content: str) -> str:
     return hashlib.sha256(content.encode("utf-8")).hexdigest()
+
 
 # ------------------- 文件读写 -------------------
 def load_state():
@@ -142,9 +162,11 @@ def load_state():
     with open(STATE_FILE, "r", encoding="utf-8") as f:
         return json.load(f)
 
+
 def save_state(state):
     with open(STATE_FILE, "w", encoding="utf-8") as f:
         json.dump(state, f, ensure_ascii=False, indent=2)
+
 
 def load_sources():
     """
@@ -164,6 +186,7 @@ def load_sources():
             url = parts[1].strip()
             items.append({"name": name, "url": url})
     return items
+
 
 # ------------------- 读取订阅Excel -------------------
 def load_subscriptions():
@@ -209,6 +232,7 @@ def load_subscriptions():
 
     return school_to_emails
 
+
 # ------------------- 主流程 -------------------
 def main():
     sources = load_sources()
@@ -240,7 +264,7 @@ def main():
 
     save_state(state)
 
-    # 新增：每次运行给 TEST_MAIL_TO 发“监控汇总”（验收用）
+    # 每次运行给 TEST_MAIL_TO 发“监控汇总”（验收用）
     send_summary_email(updates_by_school, failures)
 
     # 没更新就不打扰订阅用户（汇总邮件已发给你自己）
@@ -275,6 +299,7 @@ def main():
 
         send_email_to(subject, body, em)
         print(f"Sent to {em}: {len(school_map)} schools updated.")
+
 
 if __name__ == "__main__":
     main()
