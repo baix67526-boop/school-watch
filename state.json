@@ -1,90 +1,90 @@
 {
   "https://admission.pku.edu.cn/xxgk/xxgkssbm/index.htm": {
     "fp": "4f54f132995fab4c01c388443a916522c9817de2d2e9332f2c7d59ec8b28edd7",
-    "ts": 1770785752
+    "ts": 1770790614
   },
   "https://pgs.ruc.edu.cn/sszs.htm": {
     "fp": null,
-    "ts": 1770785863,
+    "ts": 1770790724,
     "error": "HTTPSConnectionPool(host='pgs.ruc.edu.cn', port=443): Max retries exceeded with url: /sszs.htm (Caused by NewConnectionError(\"HTTPSConnection(host='pgs.ruc.edu.cn', port=443): Failed to establish a new connection: [Errno 101] Network is unreachable\"))"
   },
   "https://yz.tsinghua.edu.cn/zsxx/sszs/jzml.htm": {
     "fp": "6ee17ff7b00c95d3fa2e7ff51e6d2d4a9f9de0c173f18a35e807f9994dbc025f",
-    "ts": 1770785864
+    "ts": 1770790726
   },
   "https://yzb.bjtu.edu.cn/sszs/index.htm": {
     "fp": "3df6f6854d7343b5d44929c0060d513573b302782a9089f93ad8b782a0d7b985",
-    "ts": 1770785865
+    "ts": 1770790728
   },
   "https://yanzhao.bjut.edu.cn/sszs.htm": {
     "fp": "8fb6d013e3d02de8784a394380408d2d8393b68e7551352f0781c1557f55bf55",
-    "ts": 1770785867
+    "ts": 1770790730
   },
   "https://yzb.buaa.edu.cn/xlss.htm": {
     "fp": "f0033cf58ee0f57011b159a46fe98ec91eb7b069441ef30d3d1b8e811b2a493e",
-    "ts": 1770785869
+    "ts": 1770790732
   },
   "https://grd.bit.edu.cn/zsgz/ssyjs/tzgg_ss/index.htm": {
     "fp": "7397a030e703c89cf6e246fdacae03b2c9aa5d469c787c398e1a15e9abc5b36d",
-    "ts": 1770785872
+    "ts": 1770790736
   },
   "https://yzxc.ustb.edu.cn/sssbkzn/sstzgg/index.htm": {
     "fp": "55592305cc85051a28a8b447a2676f3f848b309933cf0a7bbdb16f543844c1d8",
-    "ts": 1770785874
+    "ts": 1770790737
   },
   "https://yjsy.ncut.edu.cn/zsgz/zytz.htm": {
     "fp": "c466a08bbe995ec6aca30e72642e818ac74fa23614a8ac55ddf68a20ecab3ee1",
-    "ts": 1770785876
+    "ts": 1770790740
   },
   "https://graduate.buct.edu.cn/14026/list.htm": {
     "fp": "910a1795b3059cb39699ece896b1bdc6b8ad0ca0b4b33b5ac7ecbad475b189ff",
-    "ts": 1770785878
+    "ts": 1770790742
   },
   "https://yjs.btbu.edu.cn/zsgz/sszs/index.htm": {
     "fp": "16192ccc24b4a435021d209859ccb7f0d4cb11a5ab6eb689bc5864276e2113ba",
-    "ts": 1770785885
+    "ts": 1770790745
   },
   "https://yjs.bift.edu.cn/zsgz/zsxx/index.htm": {
     "fp": null,
-    "ts": 1770785996,
+    "ts": 1770790856,
     "error": "HTTPSConnectionPool(host='yjs.bift.edu.cn', port=443): Max retries exceeded with url: /zsgz/zsxx/index.htm (Caused by ReadTimeoutError(\"HTTPSConnectionPool(host='yjs.bift.edu.cn', port=443): Read timed out. (read timeout=25)\"))"
   },
   "https://yzb.bupt.edu.cn/tzgg.htm": {
     "fp": null,
-    "ts": 1770785997,
+    "ts": 1770790858,
     "error": "412 Client Error: Precondition Failed for url: https://yzb.bupt.edu.cn/tzgg.htm"
   },
   "https://gs.bigc.edu.cn/yjszs/sszs/2026nzs/index.htm": {
     "fp": "6c40d25b6f59ffa051603ddc56f8f7dddfef76efec78cb51e6c6a7bf754086c3",
-    "ts": 1770785998
+    "ts": 1770790859
   },
   "https://yjsy.bucea.edu.cn/tzgg0/index.htm": {
     "fp": "b779307bdeac4c23806f8d549c654637fbd1c6011e74457dd682b0186469c356",
-    "ts": 1770786000
+    "ts": 1770790862
   },
   "https://www.bipt.edu.cn/pub/yjszsw/zkxx/bkzl/index.htm": {
     "fp": "f6ae16d152e327a79b052cfd4187940847204743506f050ded9ce506696487b4",
-    "ts": 1770786002
+    "ts": 1770790863
   },
   "https://www.besti.edu.cn/221/index.html": {
     "fp": null,
-    "ts": 1770786113,
+    "ts": 1770790975,
     "error": "HTTPSConnectionPool(host='www.besti.edu.cn', port=443): Max retries exceeded with url: /221/index.html (Caused by NewConnectionError(\"HTTPSConnection(host='www.besti.edu.cn', port=443): Failed to establish a new connection: [Errno 101] Network is unreachable\"))"
   },
   "https://yz.cau.edu.cn/col/col41740/index.html": {
     "fp": "90cbb59ab8587eab9c4374621998c016879f8bbbc0a207037933a0458fe364ae",
-    "ts": 1770786115
+    "ts": 1770790979
   },
   "https://yz.bua.edu.cn/zsdt.htm": {
     "fp": "d4646b74c1972841874575645617de43856c021cdda272e5072a83be54ebaa3b",
-    "ts": 1770786117
+    "ts": 1770790980
   },
   "https://graduate.bjfu.edu.cn/zsgl/sszs/index.html": {
     "fp": "5d9fdc66ac356626594ea1652c6246209e3988f96d658ec7f7d1f8bca1642297",
-    "ts": 1770786118
+    "ts": 1770790982
   },
   "https://graduate.pumc.edu.cn/zsw/xxgk.htm": {
     "fp": "cd686763a881555bd281022016865845b97b7bd13ae9f3e64f752e6b9c8ff29a",
-    "ts": 1770786120
+    "ts": 1770790985
   }
 }
