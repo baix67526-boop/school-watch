@@ -2,7 +2,7 @@ name: school-watch
 
 on:
   schedule:
-    - cron: "*/30 * * * *" # 每30分钟
+    - cron: "*/1 * * * *" # 每30分钟
   workflow_dispatch:
 
 jobs:
