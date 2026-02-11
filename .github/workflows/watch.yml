@@ -1,0 +1,38 @@
+name: school-watch
+
+on:
+  schedule:
+    - cron: "*/30 * * * *"  # 每30分钟
+  workflow_dispatch:
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install deps
+        run: pip install -r requirements.txt
+
+      - name: Run watcher
+        env:
+          SMTP_HOST: ${{ secrets.SMTP_HOST }}
+          SMTP_PORT: ${{ secrets.SMTP_PORT }}
+          SMTP_USER: ${{ secrets.SMTP_USER }}
+          SMTP_PASS: ${{ secrets.SMTP_PASS }}
+          MAIL_TO: ${{ secrets.MAIL_TO }}
+        run: python watcher.py
+
+      - name: Commit state
+        run: |
+          git config user.name "github-actions"
+          git config user.email "github-actions@github.com"
+          git add state.json
+          git commit -m "Update state" || echo "No changes"
+          git push
+add watch workflow
